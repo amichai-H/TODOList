@@ -35,21 +35,12 @@ Make sure you have the following installed:
 2. **Navigate to the project directory:**
     ```sh
     cd TODOList
-    ```
-3. **Install the required packages:**
-    ```sh
-    pip install -r requirements.txt
-    ```
 
 ### Running the Application
 
-1. **Initialize the database:**
-    ```sh
-    python init_db.py
-    ```
 2. **Run the Flask server:**
     ```sh
-    python app.py
+    python server.py
     ```
 3. **Access the application:**
     Open your web browser and go to `http://127.0.0.1:5000/`
