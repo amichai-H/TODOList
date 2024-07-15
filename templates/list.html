@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>TODO List</h1>
+        <ul id="itemList">
+            {% for item in items %}
+            <li class="{{ 'done' if item.done else '' }}">
+                <input type="checkbox" class="checkbox" {% if item.done %} checked {% endif %} data-item-id="{{ item.id }}">
+                <label>{{ item.item }}</label>
+                <button class="removeBtn" data-item-id="{{ item.id }}">Remove</button>
+            </li>
+            {% endfor %}
+        </ul>
+        <p id="message"></p>
+        <button id="addItemBtn">Add Item</button>
+        <a href="/">Back to Home</a>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const itemList = $('#itemList');
+
+            // Function to load items initially and on updates
+            function loadItems() {
+                $.ajax({
+                    url: '/list',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        itemList.empty(); // Clear existing list
+                        data.forEach(function(item) {
+                            const listItem = $('<li>').addClass(item.done ? 'done' : '');
+                            listItem.append($('<input>').attr({
+                                type: 'checkbox',
+                                class: 'checkbox',
+                                checked: item.done,
+                                'data-item-id': item.id
+                            }));
+                            listItem.append($('<label>').text(item.item));
+                            listItem.append($('<button>').addClass('removeBtn').attr({
+                                'data-item-id': item.id
+                            }).text('Remove'));
+                            itemList.append(listItem);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching data:', error);
+                    }
+                });
+            }
+
+            // Load items initially
+            loadItems();
+
+            // Submit new item
+            $('#addItemBtn').on('click', async () => {
+                const newItem = prompt('Enter new item:');
+                if (newItem) {
+                    const response = await fetch('/list', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ item: newItem }),
+                    });
+                    const result = await response.json();
+                    // Display message or update UI based on result
+                    console.log(result.message);
+                    // Refresh list after adding item
+                    if (response.ok) {
+                        window.location.href = '/list';
+                    }
+                }
+            });
+
+            // Event listener for removing items
+            itemList.on('click', '.removeBtn', async function() {
+                const itemId = $(this).data('item-id');
+                const response = await fetch(`/list/${itemId}`, {
+                    method: 'DELETE',
+                });
+                const result = await response.json();
+                // Display message or update UI based on result
+                console.log(result.message);
+                // Refresh list after deleting item
+                if (response.ok) {
+                    window.location.href = '/list';
+                }
+            });
+
+            // Event listener for checkbox clicks
+            itemList.on('change', '.checkbox', async function() {
+                const itemId = $(this).data('item-id');
+                const checked = $(this).is(':checked');
+                const response = await fetch(`/list/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ done: checked })  // Sending the checked state
+                });
+                const result = await response.json();
+                // Display message or update UI based on result
+                console.log(result.message);
+                // Refresh list after updating item
+                loadItems();
+            });
+        });
+    </script>
+</body>
+</html>
